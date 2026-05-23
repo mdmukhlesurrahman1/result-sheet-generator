@@ -4,286 +4,595 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>রেজাল্ট শীট জেনারেটর</title>
-
-    <!-- সোলাইমান লিপি ফন্ট সিডিএন (SolaimanLipi CDN) -->
+    <title>গুগল শিট অনলাইন রেজাল্ট শীট (অফলাইন মোড)</title>
     <link href="https://fonts.cdnfonts.com/css/solaimanlipi" rel="stylesheet">
-
-    <!-- Tailwind CSS CDN -->
+    <!-- Font Awesome v6 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-
-    <!-- Custom CSS for Print/PDF Mode -->
     <style>
         body,
         input,
         button,
+        select,
         table {
             font-family: "Solaimanlipi", sans-serif !important;
         }
 
+        .data-loader {
+            margin: 0;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
         @media print {
+            body {
+                background-color: #fff;
+            }
 
             .hide-on-pdf {
-                display: none;
+                display: none !important;
+            }
+
+            .print-no-shadow {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                border-radius: 0;
+            }
+
+            table {
+                font-size: 14px !important;
+            }
+
+            th,
+            td {
+                padding: 4px !important;
             }
         }
     </style>
-
 </head>
 
 <body class="bg-gray-100 min-h-screen font-sans">
 
-    <div class="container mx-auto p-4 max-w-5xl">
-        <!-- Header Section -->
+    <!-- ক্লাউড সিঙ্ক নোটিফিকেশন লোডার -->
+    <div id="syncLoader"
+        class="data-loader bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 z-50 transition-all duration-300 transform translate-y-[-100px] opacity-0">
+        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            </path>
+        </svg>
+        <span id="syncText" class="text-xs font-bold">অনলাইনে ডাটা সেভ হচ্ছে...</span>
+    </div>
+
+    <div class="container mx-auto p-2 md:p-4 max-w-7xl">
+        <!-- Control Panel -->
         <div
-            class="flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-md gap-4 hide-on-pdf">
-            <div class="text-center md:text-left">
-                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">স্টুডেন্ট রেজাল্ট শীট</h1>
-                <p class="text-gray-600 mt-1 text-xs md:text-sm">শিক্ষার্থীদের নম্বর ইনপুট দিন এবং রেজাল্ট শীট তৈরি
-                    করুন।</p>
+            class="flex flex-col lg:flex-row justify-between items-center bg-white p-4 rounded-lg shadow-md gap-4 hide-on-pdf mb-4">
+            <div class="text-center lg:text-left flex flex-col sm:flex-row items-center gap-1 lg:gap-4">
+                <h1 class="text-2xl font-bold text-black">ক্লাউড রেজাল্ট শীট</h1>
+                <span id="onlineStatus"
+                    class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-bold">অফলাইন সাপোর্ট
+                    সচল</span>
             </div>
-            <div class="flex flex-col md:flex-row gap-3">
-                <button id="openModalBtn"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200 cursor-pointer flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    স্টুডেন্ট অ্যাড করুন
+
+            <div class="flex flex-wrap items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200">
+                <label class="text-sm font-bold text-blue-700 whitespace-nowrap">বর্তমান শ্রেণী:</label>
+                <select id="classSelector"
+                    class="bg-white border border-gray-300 rounded px-2 py-1.5 text-sm font-bold text-black focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                    <option value="play">প্লে শ্রেণী</option>
+                    <option value="nursery">নার্সারি শ্রেণী</option>
+                    <option value="class1">প্রথম শ্রেণী</option>
+                    <option value="class2">দ্বিতীয় শ্রেণী</option>
+                    <option value="class3">তৃতীয় শ্রেণী</option>
+                    <option value="class4">চতুর্থ শ্রেণী</option>
+                    <option value="class5">পঞ্চম শ্রেণী</option>
+                </select>
+                <button id="fetchDataBtn" type="button" title="ক্লাউড থেকে ডাটা নামান"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-bold cursor-pointer transition-colors">
+                    <i class="fa-solid fa-download"></i>
                 </button>
-                <button id="downloadPdfBtn"
-                    class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200 cursor-pointer flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    পিডিএফ ডাউনলোড
+                <button id="syncDataBtn" type="button" title="ক্লাউডে ডাটা সিঙ্ক করুন"
+                    class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded text-sm font-bold cursor-pointer transition-colors shadow">
+                    <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                </button>
+            </div>
+
+            <div class="flex flex-wrap gap-3 justify-center">
+                <button id="openModalBtn" type="button"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg shadow text-sm flex items-center gap-2 cursor-pointer">
+                    <span>স্টুডেন্ট যোগ করুন</span>
+                </button>
+                <button id="clearAllBtn" type="button"
+                    class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 rounded-lg shadow text-sm flex items-center gap-2 cursor-pointer">
+                    <span>শ্রেণী রিসেট</span>
+                </button>
+                <button id="downloadPdfBtn" type="button"
+                    class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-lg shadow text-sm flex items-center gap-2 cursor-pointer">
+                    <span>প্রিন্ট / PDF</span>
                 </button>
             </div>
         </div>
 
-        <!-- Result Table Section (This part will be printed to PDF) -->
-        <div id="resultSheetContainer" class="bg-white rounded-lg shadow-md overflow-hidden p-6">
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">অফিসিয়াল রেজাল্ট শীট</h2>
-                <p class="text-sm text-gray-500">তারিখ: <span id="pdfDate"></span></p>
-                <hr class="my-4 border-gray-200">
+        <!-- Result Table Section -->
+        <div id="resultSheetContainer" class="bg-white rounded-lg shadow-md overflow-hidden p-4 md:p-6 print-no-shadow">
+            <div class="text-center mb-4 relative">
+                <h2 class="text-xl md:text-3xl font-bold text-black mb-1">বলদিআটা ইসলামিয়া মডেল মাদরাসা</h2>
+                <h3 class="text-md md:text-xl font-bold text-black mb-3">১ম সাময়িক পরীক্ষা - ২০২৬ ইং</h3>
+                <div class="my-2">
+                    <span id="tableClassNameHeading"
+                        class="text-sm md:text-base font-bold text-black border-2 border-black px-4 py-1 rounded-full bg-gray-50">ফলাফল
+                        পত্র</span>
+                </div>
+                <p class="text-xs md:text-sm text-black md:absolute md:bottom-0 md:right-0 mt-2">তারিখ: <span
+                        id="pdfDate"></span></p>
+                <hr class="my-3 border-gray-300">
             </div>
 
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full border-collapse border border-gray-300 text-xs md:text-sm text-center">
+                    <thead class="bg-gray-50 font-bold text-black">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                রোল</th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">নাম
-                            </th>
-                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                বাংলা</th>
-                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                ইংরেজি</th>
-                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                গণিত</th>
-                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                মোট নম্বর</th>
-                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                গড়</th>
-                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                গ্রেড</th>
+                            <th class="border border-gray-300 p-1 md:p-2 w-12">রোল</th>
+                            <th class="border border-gray-300 p-1 md:p-2 min-w-[140px]">নাম</th>
+                            <th id="th-arabic" class="border border-gray-300 p-1 md:p-2">আরবী লিখা</th>
+                            <th id="th-bangla" class="border border-gray-300 p-1 md:p-2">বাংলা</th>
+                            <th id="th-english" class="border border-gray-300 p-1 md:p-2">ইংরেজি</th>
+                            <th id="th-math" class="border border-gray-300 p-1 md:p-2">অংক</th>
+                            <th id="th-kalima" class="border border-gray-300 p-1 md:p-2">কালিমা ও মাসায়িল</th>
+                            <th id="th-hadith" class="border border-gray-300 p-1 md:p-2">হাদীস শরীফ</th>
+                            <th id="th-prayer" class="border border-gray-300 p-1 md:p-2">আদ. সালাত ও মাসনুনাহ</th>
+                            <th id="th-socialScience" class="border border-gray-300 p-1 md:p-2">সমাজ ও বিজ্ঞান</th>
+                            <th class="border border-gray-300 p-1 md:p-2 font-bold bg-gray-100 w-14">মোট</th>
+                            <th class="border border-gray-300 p-1 md:p-2 bg-gray-100 w-14">গড়</th>
+                            <th class="border border-gray-300 p-1 md:p-2 bg-gray-100 w-14">গ্রেড</th>
+                            <!-- নতুন অবস্থান কলাম -->
+                            <th class="border border-gray-300 p-1 md:p-2 bg-amber-50 text-amber-900 font-bold w-16">
+                                অবস্থান</th>
+                            <th class="border border-gray-300 p-1 md:p-2 hide-on-pdf w-24 bg-gray-100">অ্যাকশন</th>
                         </tr>
                     </thead>
-                    <tbody id="resultTableBody" class="bg-white divide-y divide-gray-200">
-                        <!-- ডাইনামিক ডাটা এখানে আসবে -->
-                        <tr id="emptyRow">
-                            <td colspan="8" class="px-6 py-10 text-center text-gray-500 italic">এখনো কোনো ডাটা এন্ট্রি
-                                করা হয়নি। 'স্টুডেন্ট অ্যাড করুন' বাটনে ক্লিক করুন।</td>
-                        </tr>
-                    </tbody>
+                    <tbody id="resultTableBody" class="bg-white divide-y divide-gray-200"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Modal Background -->
+    <!-- Data Input Modal -->
     <div id="studentModal"
         class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
-        <!-- Modal Content Box -->
         <div
-            class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform scale-95 transition-transform duration-300">
-            <div class="bg-blue-600 px-6 py-4 flex justify-between items-center text-white">
-                <h3 class="text-xl font-bold">নতুন স্টুডেন্ট ডাটা এন্ট্রি</h3>
-                <button id="closeModalBtn"
-                    class="text-white hover:text-gray-200 text-2xl font-semibold focus:outline-none cursor-pointer">&times;</button>
+            class="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden transform scale-95 transition-transform duration-300">
+            <div class="bg-blue-600 p-4 flex justify-between items-center text-white">
+                <h3 id="modalTitle" class="text-lg font-bold">নতুন স্টুডেন্ট ডাটা এন্ট্রি</h3>
+                <button id="closeModalBtn" type="button"
+                    class="text-white text-2xl font-semibold cursor-pointer">&times;</button>
             </div>
-
-            <form id="studentForm" class="p-6 space-y-4">
+            <form id="studentForm" class="p-4 space-y-4 max-h-[85vh] overflow-y-auto">
+                <input type="hidden" id="editIndex" value="-1">
+                <div
+                    class="bg-blue-50 p-2.5 rounded-lg border border-blue-100 text-xs md:text-sm font-bold text-blue-800">
+                    স্টুডেন্ট ফরম: <span id="modalClassName">প্লে শ্রেণী</span>
+                </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">স্টুডেন্টের নাম</label>
+                    <label class="block text-sm font-medium text-black mb-1">স্টুডেন্টের নাম</label>
                     <input type="text" id="studentName" required
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="উদা: মো: মখলেছুর রহমান">
+                        placeholder="উদা: মো: মোখলেছুর রহমান">
                 </div>
-
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">বাংলা</label>
-                        <input type="number" id="marksBangla" min="0" max="100" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="0-100">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ইংরেজি</label>
-                        <input type="number" id="marksEnglish" min="0" max="100" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="0-100">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">গণিত</label>
-                        <input type="number" id="marksMath" min="0" max="100" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="0-100">
-                    </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <div><label class="block text-xs font-bold text-black mb-1">আরবী লিখা</label><input type="number"
+                            id="marksArabic" min="0" max="100"
+                            class="w-full px-3 py-1 border border-gray-300 rounded-md text-sm shadow-sm"
+                            placeholder="নম্বর"></div>
+                    <div><label class="block text-xs font-bold text-black mb-1">বাংলা</label><input type="number"
+                            id="marksBangla" min="0" max="100"
+                            class="w-full px-3 py-1 border border-gray-300 rounded-md text-sm shadow-sm"
+                            placeholder="নম্বর"></div>
+                    <div><label class="block text-xs font-bold text-black mb-1">ইংরেজি</label><input type="number"
+                            id="marksEnglish" min="0" max="100"
+                            class="w-full px-3 py-1 border border-gray-300 rounded-md text-sm shadow-sm"
+                            placeholder="নম্বর"></div>
+                    <div><label class="block text-xs font-bold text-black mb-1">অংক</label><input type="number"
+                            id="marksMath" min="0" max="100"
+                            class="w-full px-3 py-1 border border-gray-300 rounded-md text-sm shadow-sm"
+                            placeholder="নম্বর"></div>
+                    <div><label class="block text-xs font-bold text-black mb-1">কালিমা ও মাসায়িল</label><input
+                            type="number" id="marksKalima" min="0" max="100"
+                            class="w-full px-3 py-1 border border-gray-300 rounded-md text-sm shadow-sm"
+                            placeholder="নম্বর"></div>
+                    <div><label class="block text-xs font-bold text-black mb-1">হাদীস শরীফ</label><input type="number"
+                            id="marksHadith" min="0" max="100"
+                            class="w-full px-3 py-1 border border-gray-300 rounded-md text-sm shadow-sm"
+                            placeholder="নম্বর"></div>
+                    <div><label class="block text-xs font-bold text-black mb-1">আদ. সালাত ও মাসনুনাহ</label><input
+                            type="number" id="marksPrayer" min="0" max="100"
+                            class="w-full px-3 py-1 border border-gray-300 rounded-md text-sm shadow-sm"
+                            placeholder="নম্বর"></div>
+                    <div><label class="block text-xs font-bold text-black mb-1">সমাজ ও বিজ্ঞান</label><input
+                            type="number" id="marksSocialScience" min="0" max="100"
+                            class="w-full px-3 py-1 border border-gray-300 rounded-md text-sm shadow-sm"
+                            placeholder="নম্বর"></div>
                 </div>
-
-                <div class="pt-4 flex justify-end gap-2">
+                <div class="pt-4 flex justify-end gap-2 border-t border-gray-100">
                     <button type="button" id="cancelModalBtn"
-                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition cursor-pointer">বাতিল</button>
-                    <button type="submit"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition cursor-pointer">সংরক্ষণ
+                        class="px-4 py-2 bg-gray-200 text-black rounded-md hover:bg-gray-300 cursor-pointer">বাতিল</button>
+                    <button type="submit" id="submitBtn"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer">সংরক্ষণ
                         করুন</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- JavaScript -->
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal"
+        class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div
+            class="bg-white rounded-xl shadow-2xl max-w-sm w-full mx-4 transform scale-95 transition-all duration-300 p-6 text-center">
+            <h3 id="deleteModalTitle" class="text-xl font-bold text-black mb-2">আপনি কি নিশ্চিত?</h3>
+            <p id="deleteModalMessage" class="text-sm text-black mb-6"></p>
+            <div class="flex justify-center gap-3">
+                <button id="cancelDeleteBtn" type="button"
+                    class="px-4 py-2 bg-gray-200 text-black rounded-md hover:bg-gray-300 text-sm cursor-pointer">বাতিল</button>
+                <button id="confirmDeleteBtn" type="button"
+                    class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm cursor-pointer">মুছে
+                    ফেলুন</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // DOM Elements
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw6ryVE3-Mzq64jkjJLa134stneBZGuy9z8SAtHG-zZG3Su8Vnw5oOVZFr9mqG7t4WeAg/exec';
+
+        const classSelector = document.getElementById('classSelector');
+        const fetchDataBtn = document.getElementById('fetchDataBtn');
+        const syncDataBtn = document.getElementById('syncDataBtn');
+        const tableClassNameHeading = document.getElementById('tableClassNameHeading');
+        const modalClassName = document.getElementById('modalClassName');
         const openModalBtn = document.getElementById('openModalBtn');
         const closeModalBtn = document.getElementById('closeModalBtn');
         const cancelModalBtn = document.getElementById('cancelModalBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
         const studentModal = document.getElementById('studentModal');
         const studentForm = document.getElementById('studentForm');
         const resultTableBody = document.getElementById('resultTableBody');
-        const emptyRow = document.getElementById('emptyRow');
         const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        const modalTitle = document.getElementById('modalTitle');
+        const submitBtn = document.getElementById('submitBtn');
+        const editIndexInput = document.getElementById('editIndex');
+        const syncLoader = document.getElementById('syncLoader');
+        const syncText = document.getElementById('syncText');
 
-        document.getElementById('pdfDate').innerText = new Date().toLocaleDateString('bn-BD') + " ইং";
+        const deleteModal = document.getElementById('deleteModal');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const deleteModalTitle = document.getElementById('deleteModalTitle');
+        const deleteModalMessage = document.getElementById('deleteModalMessage');
 
-        // লোকাল স্টোরেজ থেকে আগের ডাটা লোড করা, না থাকলে খালি অ্যারে [] নেওয়া
-        let students = JSON.parse(localStorage.getItem('resultSheetData')) || [];
+        let deleteTargetIndex = null;
+        let isDeleteAll = false;
+        let currentClass = classSelector.value;
+        let students = [];
 
-        // পেজ লোড হওয়ার সাথে সাথে আগের ডাটা টেবিলে দেখানোর জন্য ফাংশন কল
-        renderTable();
+        const subjectKeys = ['arabic', 'bangla', 'english', 'math', 'kalima', 'hadith', 'prayer', 'socialScience'];
+        const thElements = {
+            arabic: document.getElementById('th-arabic'), bangla: document.getElementById('th-bangla'),
+            english: document.getElementById('th-english'), math: document.getElementById('th-math'),
+            kalima: document.getElementById('th-kalima'), hadith: document.getElementById('th-hadith'),
+            prayer: document.getElementById('th-prayer'), socialScience: document.getElementById('th-socialScience')
+        };
 
-        // গ্রেড হিসাব করার ফাংশন
-        function calculateGrade(bangla, english, math, average) {
-            if (bangla < 33 || english < 33 || math < 33) {
-                return { letter: 'F', color: 'text-red-600 font-bold' };
+        const classNamesBangla = {
+            'play': 'প্লে শ্রেণীর ফলাফল পত্র', 'nursery': 'নার্সারি শ্রেণীর ফলাফল পত্র',
+            'class1': 'প্রথম শ্রেণীর ফলাফল পত্র', 'class2': 'দ্বিতীয় শ্রেণীর ফলাফল পত্র',
+            'class3': 'তৃতীয় শ্রেণীর ফলাফল পত্র', 'class4': 'চতুর্থ শ্রেণীর ফলাফল পত্র', 'class5': 'পঞ্চম শ্রেণীর ফলাফল পত্র'
+        };
+
+        function showSync(text) {
+            syncText.innerText = text;
+            syncLoader.classList.remove('translate-y-[-100px]', 'opacity-0');
+        }
+        function hideSync() {
+            syncLoader.classList.add('translate-y-[-100px]', 'opacity-0');
+        }
+
+        function toBanglaNum(num) {
+            if (num === null || num === undefined || num === '') return '';
+            const banglaDigits = { '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪', '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯', '.': '.' };
+            return num.toString().split('').map(digit => banglaDigits[digit] || digit).join('');
+        }
+
+        document.getElementById('pdfDate').innerText = new Date().toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' }) + " ইং";
+
+        async function loadClassDataFromCloud() {
+            currentClass = classSelector.value;
+            showSync("অনলাইন থেকে ডাটা লোড হচ্ছে...");
+            try {
+                const response = await fetch(`${SCRIPT_URL}?className=${currentClass}`);
+                if (!response.ok) throw new Error("Network Response Error");
+                students = await response.json();
+                localStorage.setItem('local_cloud_data_' + currentClass, JSON.stringify(students));
+                alert("অনলাইন থেকে ডাটা সফলভাবে ডাউনলোড হয়েছে এবং লোকাল স্টোরেজে আপডেট করা হয়েছে!");
+                renderTable();
+            } catch (error) {
+                console.error("ডাটা লোড করতে ব্যর্থ:", error);
+                alert("ইন্টারনেট সংযোগ নেই! লোকাল স্টোরেজ থেকে ডাটা লোড করা হচ্ছে।");
+                loadFromLocalStorage();
+            } finally {
+                hideSync();
             }
+        }
+
+        function loadFromLocalStorage() {
+            currentClass = classSelector.value;
+            students = JSON.parse(localStorage.getItem('local_cloud_data_' + currentClass)) || [];
+            renderTable();
+        }
+
+        async function syncDataToCloud() {
+            currentClass = classSelector.value;
+            showSync("অনলাইনে ডাটা সিঙ্ক হচ্ছে...");
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ className: currentClass, students: students })
+                });
+                alert("অভিনন্দন! আপনার লোকাল ডাটা সফলভাবে গুগল শিটে সিঙ্ক (আপডেট) হয়েছে।");
+            } catch (error) {
+                console.error("অনলাইনে সেভ করা যায়নি:", error);
+                alert("ডাটা সিঙ্ক ব্যর্থ হয়েছে! দয়া করে ইন্টারনেট সংযোগ চেক করুন।");
+            } finally {
+                setTimeout(hideSync, 500);
+            }
+        }
+
+        function saveToLocalOnly() {
+            localStorage.setItem('local_cloud_data_' + currentClass, JSON.stringify(students));
+        }
+
+        fetchDataBtn.addEventListener('click', loadClassDataFromCloud);
+        syncDataBtn.addEventListener('click', syncDataToCloud);
+
+        classSelector.addEventListener('change', () => {
+            currentClass = classSelector.value;
+            tableClassNameHeading.innerText = classNamesBangla[currentClass];
+            modalClassName.innerText = classSelector.options[classSelector.selectedIndex].text;
+            loadFromLocalStorage();
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            currentClass = classSelector.value;
+            tableClassNameHeading.innerText = classNamesBangla[currentClass];
+            modalClassName.innerText = classSelector.options[classSelector.selectedIndex].text;
+            loadFromLocalStorage();
+        });
+
+        function getActiveSubjects() {
+            let activeSubjects = {};
+            subjectKeys.forEach(key => activeSubjects[key] = false);
+            if (students.length === 0) {
+                subjectKeys.forEach(key => activeSubjects[key] = true);
+                return activeSubjects;
+            }
+            students.forEach(student => {
+                subjectKeys.forEach(key => {
+                    if (student[key] !== undefined && student[key] !== "") activeSubjects[key] = true;
+                });
+            });
+            return activeSubjects;
+        }
+
+        function calculateGrade(student) {
+            let hasFailMark = false;
+            let totalActiveSubjectsWithMarks = 0;
+
+            subjectKeys.forEach(key => {
+                if (student[key] !== "" && student[key] !== undefined) {
+                    totalActiveSubjectsWithMarks++;
+                    if (parseInt(student[key]) < 33) hasFailMark = true;
+                }
+            });
+
+            if (hasFailMark) return { letter: 'F', color: 'text-red-600 font-bold' };
+            if (totalActiveSubjectsWithMarks === 0) return { letter: '-', color: 'text-gray-500' };
+
+            const average = student.average;
             if (average >= 80) return { letter: 'A+', color: 'text-green-600 font-bold' };
             if (average >= 70) return { letter: 'A', color: 'text-green-500 font-bold' };
             if (average >= 60) return { letter: 'A-', color: 'text-blue-500 font-bold' };
             if (average >= 50) return { letter: 'B', color: 'text-yellow-600 font-bold' };
             if (average >= 40) return { letter: 'C', color: 'text-orange-500 font-bold' };
-            if (average >= 33) return { letter: 'D', color: 'text-gray-600' };
+            if (average >= 33) return { letter: 'D', color: 'text-black' };
             return { letter: 'F', color: 'text-red-600 font-bold' };
         }
 
-        // মোডাল ওপেন ও ক্লোজ অ্যানিমেশন
-        function toggleModal(show) {
-            if (show) {
-                studentModal.classList.remove('hidden');
-                setTimeout(() => {
-                    studentModal.classList.remove('opacity-0');
-                    studentModal.querySelector('.transform').classList.remove('scale-95');
-                }, 10);
-            } else {
-                studentModal.classList.add('opacity-0');
-                studentModal.querySelector('.transform').classList.add('scale-95');
-                setTimeout(() => {
-                    studentModal.classList.add('hidden');
-                    studentForm.reset();
-                }, 300);
+        // পজিশন/মেরিট পজিশন গণনা করার ফাংশন
+        function getRankings() {
+            // প্রথমে প্রতিটি স্টুডেন্টের মোট নম্বর ও ইনডেক্স ম্যাপ করে একটি টেম্পোরারি অ্যারে তৈরি এবং সর্ট (বড় থেকে ছোট) করা
+            let sorted = students.map((s, idx) => {
+                let totalMarks = 0;
+                subjectKeys.forEach(key => {
+                    if (s[key] !== "" && s[key] !== undefined) {
+                        totalMarks += parseInt(s[key]) || 0;
+                    }
+                });
+                return { index: idx, total: totalMarks };
+            }).sort((a, b) => b.total - a.total);
+
+            // র‍্যাংক নির্ধারণ (একই নম্বর হলে সমান পজিশন পাবে)
+            let ranks = new Array(students.length);
+            let currentRank = 1;
+
+            for (let i = 0; i < sorted.length; i++) {
+                if (i > 0 && sorted[i].total < sorted[i - 1].total) {
+                    currentRank = i + 1;
+                }
+                ranks[sorted[i].index] = currentRank;
             }
+            return ranks;
         }
 
-        openModalBtn.addEventListener('click', () => toggleModal(true));
-        closeModalBtn.addEventListener('click', () => toggleModal(false));
-        cancelModalBtn.addEventListener('click', () => toggleModal(false));
-
-        // টেবিলে ডাটা রেন্ডার/প্রদর্শন করার মেইন ফাংশন
         function renderTable() {
-            // টেবিল বডি ক্লিয়ার করা
             resultTableBody.innerHTML = '';
+            const activeSubjects = getActiveSubjects();
+
+            subjectKeys.forEach(key => {
+                if (activeSubjects[key]) { thElements[key].classList.remove('hidden'); }
+                else { thElements[key].classList.add('hidden'); }
+            });
 
             if (students.length === 0) {
-                // ডাটা না থাকলে নোটিফিকেশন রো দেখানো
-                resultTableBody.appendChild(emptyRow);
+                resultTableBody.innerHTML = `<tr><td colspan="15" class="px-6 py-10 text-center text-black italic">এই শ্রেণীতে কোনো ডাটা নেই। নতুন স্টুডেন্ট যোগ করুন অথবা অনলাইন থেকে "ডাটা লোড করুন"।</td></tr>`;
                 return;
             }
 
-            // লুপ চালিয়ে ডাটা টেবিলে পুশ করা
+            // সকল শিক্ষার্থীর র‍্যাংক এর তালিকা নিয়ে আসা
+            const studentRanks = getRankings();
+
             students.forEach((student, index) => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 transition-colors";
+                let subjectTDs = '';
+                let totalMarks = 0;
+                let subjectsWithMarksCount = 0;
 
-                const grade = calculateGrade(student.bangla, student.english, student.math, student.average);
+                subjectKeys.forEach(key => {
+                    if (activeSubjects[key]) {
+                        if (student[key] === "" || student[key] === undefined) {
+                            subjectTDs += `<td class="border border-gray-300 p-1 text-black italic bg-gray-50">-</td>`;
+                        } else {
+                            subjectTDs += `<td class="border border-gray-300 p-1 text-black">${toBanglaNum(student[key])}</td>`;
+                            totalMarks += parseInt(student[key]) || 0;
+                            subjectsWithMarksCount++;
+                        }
+                    }
+                });
+
+                student.total = totalMarks;
+                student.average = subjectsWithMarksCount > 0 ? parseFloat((totalMarks / subjectsWithMarksCount).toFixed(2)) : 0;
+                const grade = calculateGrade(student);
+                const currentRank = studentRanks[index];
 
                 tr.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${index + 1}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800">${student.name}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-600">${student.bangla}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-600">${student.english}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-600">${student.math}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-bold text-gray-800">${student.total}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-600">${student.average}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-center ${grade.color}">${grade.letter}</td>
-        `;
+                    <td class="border border-gray-300 p-1 md:p-2 font-semibold text-black">${toBanglaNum(index + 1)}</td>
+                    <td class="border border-gray-300 p-1 md:p-2 text-left font-semibold text-black">${student.name}</td>
+                    ${subjectTDs}
+                    <td class="border border-gray-300 p-1 md:p-2 font-bold text-black bg-gray-50">${toBanglaNum(student.total)}</td>
+                    <td class="border border-gray-300 p-1 md:p-2 text-black bg-gray-50">${toBanglaNum(student.average)}</td>
+                    <td class="border border-gray-300 p-1 md:p-2 ${grade.color} bg-gray-50">${grade.letter}</td>
+                    <!-- নতুন অবস্থান ডাটা সেল -->
+                    <td class="border border-gray-300 p-1 md:p-2 font-bold bg-amber-50 text-amber-900">${toBanglaNum(currentRank)}</td>
+                    <td class="border border-gray-300 p-1 md:p-2 hide-on-pdf flex justify-center items-center gap-3">
+                        <button type="button" onclick="editStudent(${index})" class="text-blue-600 text-base cursor-pointer hover:scale-110 transition-transform" title="সম্পাদনা">✏️</button>
+                        <button type="button" onclick="triggerDelete(${index})" class="text-red-500 text-base cursor-pointer hover:scale-110 transition-transform" title="মুছুন">❌</button>
+                    </td>
+                `;
                 resultTableBody.appendChild(tr);
             });
         }
 
-        // ফর্ম সাবমিট হ্যান্ডলার (নতুন ডাটা যোগ করা)
+        function toggleModal(show, isEdit = false) {
+            if (show) {
+                if (!isEdit) { modalTitle.innerText = "নতুন স্টুডেন্ট ডাটা এন্ট্রি"; submitBtn.innerText = "সংরক্ষণ করুন"; editIndexInput.value = "-1"; studentForm.reset(); }
+                studentModal.classList.remove('hidden');
+                setTimeout(() => { studentModal.classList.remove('opacity-0'); studentModal.querySelector('.transform').classList.remove('scale-95'); }, 10);
+            } else {
+                studentModal.classList.add('opacity-0'); studentModal.querySelector('.transform').classList.add('scale-95');
+                setTimeout(() => { studentModal.classList.add('hidden'); studentForm.reset(); }, 300);
+            }
+        }
+
+        function toggleDeleteModal(show, title = "", message = "") {
+            if (show) {
+                deleteModalTitle.innerText = title; deleteModalMessage.innerText = message;
+                deleteModal.classList.remove('hidden');
+                setTimeout(() => { deleteModal.classList.remove('opacity-0'); deleteModal.querySelector('.transform').classList.remove('scale-95'); }, 10);
+            } else {
+                deleteModal.classList.add('opacity-0'); deleteModal.querySelector('.transform').classList.add('scale-95');
+                setTimeout(() => deleteModal.classList.add('hidden'), 300);
+            }
+        }
+
+        openModalBtn.addEventListener('click', () => toggleModal(true, false));
+        closeModalBtn.addEventListener('click', () => toggleModal(false));
+        cancelModalBtn.addEventListener('click', () => toggleModal(false));
+        cancelDeleteBtn.addEventListener('click', () => toggleDeleteModal(false));
+
+        window.editStudent = function (index) {
+            const student = students[index];
+            modalTitle.innerText = "শিক্ষার্থীর তথ্য পরিবর্তন (Edit)"; submitBtn.innerText = "আপডেট করুন"; editIndexInput.value = index;
+            document.getElementById('studentName').value = student.name;
+            subjectKeys.forEach(key => {
+                const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);
+                document.getElementById('marks' + capitalizedKey).value = student[key] !== undefined ? student[key] : "";
+            });
+            toggleModal(true, true);
+        }
+
+        window.triggerDelete = function (index) {
+            deleteTargetIndex = index; isDeleteAll = false;
+            toggleDeleteModal(true, "শিক্ষার্থীর তথ্য মুছুন", `আপনি কি নিশ্চিতভাবে "${students[index].name}" এর তথ্য মুছতে চান? (এটি স্থায়ী করতে পরে সিঙ্ক বাটনে চাপুন)`);
+        }
+
+        clearAllBtn.addEventListener('click', () => {
+            if (students.length === 0) return;
+            isDeleteAll = true; deleteTargetIndex = null;
+            toggleDeleteModal(true, `শ্রেণী রিসেট করবেন?`, `সাবধান! চলতি ক্লাসের সমস্ত ডাটা লোকাল প্যানেল থেকে মুছে যাবে। ক্লাউড আপডেট করতে পরে সিঙ্ক বাটনে চাপুন।`);
+        });
+
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (isDeleteAll) { students = []; }
+            else if (deleteTargetIndex !== null) { students.splice(deleteTargetIndex, 1); }
+            renderTable();
+            toggleDeleteModal(false);
+            saveToLocalOnly();
+        });
+
         studentForm.addEventListener('submit', (e) => {
             e.preventDefault();
+            const name = document.getElementById('studentName').value.trim();
+            const currIndex = parseInt(editIndexInput.value);
+            let studentData = { name: name };
+            let isValid = true;
 
-            const name = document.getElementById('studentName').value;
-            const bangla = parseInt(document.getElementById('marksBangla').value);
-            const english = parseInt(document.getElementById('marksEnglish').value);
-            const math = parseInt(document.getElementById('marksMath').value);
+            subjectKeys.forEach(key => {
+                const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);
+                const val = document.getElementById('marks' + capitalizedKey).value;
 
-            const total = bangla + english + math;
-            const average = parseFloat((total / 3).toFixed(2));
+                if (val !== "") {
+                    const parsedVal = parseInt(val);
+                    if (parsedVal < 0 || parsedVal > 100) {
+                        isValid = false;
+                        alert("নম্বর অবশ্যই ০ থেকে ১০০ এর মধ্যে হতে হবে!");
+                    }
+                    studentData[key] = parsedVal;
+                } else {
+                    studentData[key] = "";
+                }
+            });
 
-            // অবজেক্ট তৈরি করে মেইন অ্যারে-তে পুশ করা
-            const newStudent = { name, bangla, english, math, total, average };
-            students.push(newStudent);
+            if (!isValid) return;
 
-            // ১. লোকাল স্টোরেজে ডাটা সেভ করা (Stringify করে)
-            localStorage.setItem('resultSheetData', JSON.stringify(students));
+            if (currIndex === -1) { students.push(studentData); }
+            else { students[currIndex] = studentData; }
 
-            // ২. টেবিল আপডেট করা
             renderTable();
-
-            // মোডাল বন্ধ করা
             toggleModal(false);
+            saveToLocalOnly();
         });
 
-        // পিডিএফ ডাউনলোড লজিক
         downloadPdfBtn.addEventListener('click', () => {
-            if (students.length === 0) {
-                alert("পিডিএফ তৈরি করার জন্য প্রথমে অন্তত একজন স্টুডেন্টের তথ্য যোগ করুন।");
-                return;
-            }
-
+            if (students.length === 0) return alert("প্রিন্ট করার কোনো ডাটা নেই।");
             window.print();
         });
-
     </script>
-
 </body>
 
 </html>
