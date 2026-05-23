@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="bn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>রেজাল্ট শীট জেনারেটর</title>
+
+    <!-- সোলাইমান লিপি ফন্ট সিডিএন (SolaimanLipi CDN) -->
+    <link href="https://fonts.cdnfonts.com/css/solaimanlipi" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <!-- Custom CSS for Print/PDF Mode -->
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body class="bg-gray-100 min-h-screen font-sans">
+
+    <div class="container mx-auto p-6 max-w-5xl">
+        <!-- Header Section -->
+        <div
+            class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-lg shadow-md gap-4 hide-on-pdf">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">স্টুডেন্ট রেজাল্ট শীট</h1>
+                <p class="text-gray-500 mt-1">শিক্ষার্থীদের নম্বর ইনপুট দিন এবং রেজাল্ট শীট তৈরি করুন।</p>
+            </div>
+            <div class="flex gap-3">
+                <button id="openModalBtn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-lg shadow transition duration-200 cursor-pointer flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    স্টুডেন্ট অ্যাড করুন
+                </button>
+                <button id="downloadPdfBtn"
+                    class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-5 rounded-lg shadow transition duration-200 cursor-pointer flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    পিডিএফ ডাউনলোড
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Table Section (This part will be printed to PDF) -->
+        <div id="resultSheetContainer" class="bg-white rounded-lg shadow-md overflow-hidden p-6">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">অফিসিয়াল রেজাল্ট শীট</h2>
+                <p class="text-sm text-gray-500">তারিখ: <span id="pdfDate"></span></p>
+                <hr class="my-4 border-gray-200">
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                রোল/ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">নাম
+                            </th>
+                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                বাংলা</th>
+                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                ইংরেজি</th>
+                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                গণিত</th>
+                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                মোট নম্বর</th>
+                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                গড়</th>
+                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                গ্রেড</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- ডাইনামিক ডাটা এখানে আসবে -->
+                        <tr id="emptyRow">
+                            <td colspan="8" class="px-6 py-10 text-center text-gray-500 italic">এখনো কোনো ডাটা এন্ট্রি
+                                করা হয়নি। 'স্টুডেন্ট অ্যাড করুন' বাটনে ক্লিক করুন।</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Background -->
+    <div id="studentModal"
+        class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <!-- Modal Content Box -->
+        <div
+            class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform scale-95 transition-transform duration-300">
+            <div class="bg-blue-600 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="text-xl font-bold">নতুন স্টুডেন্ট ডাটা এন্ট্রি</h3>
+                <button id="closeModalBtn"
+                    class="text-white hover:text-gray-200 text-2xl font-semibold focus:outline-none cursor-pointer">&times;</button>
+            </div>
+
+            <form id="studentForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">স্টুডেন্টের নাম</label>
+                    <input type="text" id="studentName" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="উদা: মো: মখলেছুর রহমান">
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">বাংলা</label>
+                        <input type="number" id="marksBangla" min="0" max="100" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="0-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ইংরেজি</label>
+                        <input type="number" id="marksEnglish" min="0" max="100" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="0-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">গণিত</label>
+                        <input type="number" id="marksMath" min="0" max="100" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="0-100">
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-2">
+                    <button type="button" id="cancelModalBtn"
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition cursor-pointer">বাতিল</button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition cursor-pointer">সংরক্ষণ
+                        করুন</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="main.js"></script>
+
+</body>
+
+</html>
