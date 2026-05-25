@@ -102,10 +102,6 @@
             </div>
 
             <div class="flex flex-wrap gap-3 justify-center">
-                <button id="openModalBtn" type="button"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg shadow text-sm flex items-center gap-2 cursor-pointer">
-                    <span>স্টুডেন্ট যোগ করুন</span>
-                </button>
                 <button id="clearAllBtn" type="button"
                     class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 rounded-lg shadow text-sm flex items-center gap-2 cursor-pointer">
                     <span>শ্রেণী রিসেট</span>
@@ -113,6 +109,10 @@
                 <button id="downloadPdfBtn" type="button"
                     class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-lg shadow text-sm flex items-center gap-2 cursor-pointer">
                     <span>প্রিন্ট / PDF</span>
+                </button>
+                <button id="openModalBtn" type="button"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg shadow text-sm flex items-center gap-2 cursor-pointer">
+                    <span>শিক্ষার্থী যোগ</span>
                 </button>
             </div>
         </div>
@@ -127,7 +127,7 @@
                         class="text-sm md:text-base font-bold text-black border-2 border-black px-4 py-1 rounded-full bg-gray-50">ফলাফল
                         পত্র</span>
                 </div>
-                <p class="text-xs md:text-sm text-black md:absolute md:bottom-0 md:right-0 mt-2">তারিখ: <span
+                <p class="text-xs md:text-sm text-black md:absolute md:bottom-4 md:right-0 mt-2">তারিখ: <span
                         id="pdfDate"></span></p>
                 <hr class="my-3 border-gray-300">
             </div>
@@ -140,8 +140,9 @@
                             <th class="border border-gray-300 p-1 md:p-2 min-w-[140px]">নাম</th>
                             <th id="th-arabic" class="border border-gray-300 p-1 md:p-2">আরবী লিখা</th>
                             <th id="th-bangla" class="border border-gray-300 p-1 md:p-2">বাংলা</th>
-                            <th id="th-english" class="border border-gray-300 p-1 md:p-2">ইংরেজি</th>
                             <th id="th-math" class="border border-gray-300 p-1 md:p-2">অংক</th>
+                            <th id="th-english" class="border border-gray-300 p-1 md:p-2">ইংরেজি</th>
+                            <th id="th-quran" class="border border-gray-300 p-1 md:p-2">কুরআন ও তাজভীদ</th>
                             <th id="th-kalima" class="border border-gray-300 p-1 md:p-2">কালিমা ও মাসায়িল</th>
                             <th id="th-hadith" class="border border-gray-300 p-1 md:p-2">হাদীস শরীফ</th>
                             <th id="th-prayer" class="border border-gray-300 p-1 md:p-2">আদ. সালাত ও মাসনুনাহ</th>
@@ -149,7 +150,6 @@
                             <th class="border border-gray-300 p-1 md:p-2 font-bold bg-gray-100 w-14">মোট</th>
                             <th class="border border-gray-300 p-1 md:p-2 bg-gray-100 w-14">গড়</th>
                             <th class="border border-gray-300 p-1 md:p-2 bg-gray-100 w-14">গ্রেড</th>
-                            <!-- নতুন অবস্থান কলাম -->
                             <th class="border border-gray-300 p-1 md:p-2 bg-amber-50 text-amber-900 font-bold w-16">
                                 অবস্থান</th>
                             <th class="border border-gray-300 p-1 md:p-2 hide-on-pdf w-24 bg-gray-100">অ্যাকশন</th>
@@ -167,23 +167,23 @@
         <div
             class="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden transform scale-95 transition-transform duration-300">
             <div class="bg-blue-600 p-4 flex justify-between items-center text-white">
-                <h3 id="modalTitle" class="text-lg font-bold">নতুন স্টুডেন্ট ডাটা এন্ট্রি</h3>
+                <h3 id="modalTitle" class="text-lg font-bold">শিক্ষার্থীর তথ্য যোগ করুন</h3>
                 <button id="closeModalBtn" type="button"
                     class="text-white text-2xl font-semibold cursor-pointer">&times;</button>
             </div>
-            <form id="studentForm" class="p-4 space-y-4 max-h-[85vh] overflow-y-auto">
+            <form id="studentForm" class="p-4 space-y-2 max-h-[85vh] overflow-y-auto">
                 <input type="hidden" id="editIndex" value="-1">
                 <div
-                    class="bg-blue-50 p-2.5 rounded-lg border border-blue-100 text-xs md:text-sm font-bold text-blue-800">
-                    স্টুডেন্ট ফরম: <span id="modalClassName">প্লে শ্রেণী</span>
+                    class="bg-blue-50 p-2 rounded-md border border-blue-100 text-xs md:text-sm font-bold text-blue-800 text-center">
+                    <span id="modalClassName">প্লে শ্রেণী</span>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-black mb-1">স্টুডেন্টের নাম</label>
+                    <label class="block text-sm font-bold text-black mb-1">ছাত্র-ছাত্রীর নাম</label>
                     <input type="text" id="studentName" required
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="উদা: মো: মোখলেছুর রহমান">
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
                     <div><label class="block text-xs font-bold text-black mb-1">আরবী লিখা</label><input type="number"
                             id="marksArabic" min="0" max="100"
                             class="w-full px-3 py-1 border border-gray-300 rounded-md text-sm shadow-sm"
@@ -192,12 +192,16 @@
                             id="marksBangla" min="0" max="100"
                             class="w-full px-3 py-1 border border-gray-300 rounded-md text-sm shadow-sm"
                             placeholder="নম্বর"></div>
+                    <div><label class="block text-xs font-bold text-black mb-1">অংক</label><input type="number"
+                            id="marksMath" min="0" max="100"
+                            class="w-full px-3 py-1 border border-gray-300 rounded-md text-sm shadow-sm"
+                            placeholder="নম্বর"></div>
                     <div><label class="block text-xs font-bold text-black mb-1">ইংরেজি</label><input type="number"
                             id="marksEnglish" min="0" max="100"
                             class="w-full px-3 py-1 border border-gray-300 rounded-md text-sm shadow-sm"
                             placeholder="নম্বর"></div>
-                    <div><label class="block text-xs font-bold text-black mb-1">অংক</label><input type="number"
-                            id="marksMath" min="0" max="100"
+                    <div><label class="block text-xs font-bold text-black mb-1">কুরআন ও তাজভীদ</label><input
+                            type="number" id="marksQuran" min="0" max="100"
                             class="w-full px-3 py-1 border border-gray-300 rounded-md text-sm shadow-sm"
                             placeholder="নম্বর"></div>
                     <div><label class="block text-xs font-bold text-black mb-1">কালিমা ও মাসায়িল</label><input
@@ -217,11 +221,11 @@
                             class="w-full px-3 py-1 border border-gray-300 rounded-md text-sm shadow-sm"
                             placeholder="নম্বর"></div>
                 </div>
-                <div class="pt-4 flex justify-end gap-2 border-t border-gray-100">
+                <div class="pt-2 flex justify-end gap-2 border-t border-gray-100">
                     <button type="button" id="cancelModalBtn"
-                        class="px-4 py-2 bg-gray-200 text-black rounded-md hover:bg-gray-300 cursor-pointer">বাতিল</button>
+                        class="px-4 py-2 bg-gray-200 text-black rounded-md hover:bg-gray-300 cursor-pointer text-sm">বাতিল</button>
                     <button type="submit" id="submitBtn"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer">সংরক্ষণ
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer text-sm">সংরক্ষণ
                         করুন</button>
                 </div>
             </form>
@@ -246,7 +250,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw6ryVE3-Mzq64jkjJLa134stneBZGuy9z8SAtHG-zZG3Su8Vnw5oOVZFr9mqG7t4WeAg/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwSISCYkuvbBLRP-3rOdkXLo43YqAqTQRlQ4P6RneTMf737lw0S3ORmutCQ6Ph0rZyogA/exec';
 
         const classSelector = document.getElementById('classSelector');
         const fetchDataBtn = document.getElementById('fetchDataBtn');
@@ -278,12 +282,13 @@
         let currentClass = classSelector.value;
         let students = [];
 
-        const subjectKeys = ['arabic', 'bangla', 'english', 'math', 'kalima', 'hadith', 'prayer', 'socialScience'];
+        const subjectKeys = ['arabic', 'bangla', 'math', 'english', 'quran', 'kalima', 'hadith', 'prayer', 'socialScience'];
         const thElements = {
             arabic: document.getElementById('th-arabic'), bangla: document.getElementById('th-bangla'),
-            english: document.getElementById('th-english'), math: document.getElementById('th-math'),
-            kalima: document.getElementById('th-kalima'), hadith: document.getElementById('th-hadith'),
-            prayer: document.getElementById('th-prayer'), socialScience: document.getElementById('th-socialScience')
+            math: document.getElementById('th-math'), english: document.getElementById('th-english'),
+            quran: document.getElementById('th-quran'), kalima: document.getElementById('th-kalima'),
+            hadith: document.getElementById('th-hadith'), prayer: document.getElementById('th-prayer'),
+            socialScience: document.getElementById('th-socialScience')
         };
 
         const classNamesBangla = {
@@ -335,7 +340,7 @@
 
         async function syncDataToCloud() {
             currentClass = classSelector.value;
-            showSync("অনলাইনে ডাটা সিঙ্ক হচ্ছে...");
+            showSync("অনলাইনে ডাটা পাঠানো হচ্ছে...");
 
             try {
                 const response = await fetch(SCRIPT_URL, {
@@ -344,12 +349,12 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ className: currentClass, students: students })
                 });
-                alert("অভিনন্দন! আপনার লোকাল ডাটা সফলভাবে গুগল শিটে সিঙ্ক (আপডেট) হয়েছে।");
+                alert("অভিনন্দন! আপনার লোকাল ডাটা সফলভাবে গুগল শিটে আপডেট হয়েছে।");
             } catch (error) {
                 console.error("অনলাইনে সেভ করা যায়নি:", error);
-                alert("ডাটা সিঙ্ক ব্যর্থ হয়েছে! দয়া করে ইন্টারনেট সংযোগ চেক করুন।");
+                alert("ডাটা আপডেট ব্যর্থ হয়েছে! দয়া করে ইন্টারনেট সংযোগ চেক করুন।");
             } finally {
-                setTimeout(hideSync, 500);
+                hideSync();
             }
         }
 
@@ -500,7 +505,7 @@
 
         function toggleModal(show, isEdit = false) {
             if (show) {
-                if (!isEdit) { modalTitle.innerText = "নতুন স্টুডেন্ট ডাটা এন্ট্রি"; submitBtn.innerText = "সংরক্ষণ করুন"; editIndexInput.value = "-1"; studentForm.reset(); }
+                if (!isEdit) { modalTitle.innerText = "শিক্ষার্থীর তথ্য যোগ করুন"; submitBtn.innerText = "সংরক্ষণ করুন"; editIndexInput.value = "-1"; studentForm.reset(); }
                 studentModal.classList.remove('hidden');
                 setTimeout(() => { studentModal.classList.remove('opacity-0'); studentModal.querySelector('.transform').classList.remove('scale-95'); }, 10);
             } else {
@@ -527,7 +532,7 @@
 
         window.editStudent = function (index) {
             const student = students[index];
-            modalTitle.innerText = "শিক্ষার্থীর তথ্য পরিবর্তন (Edit)"; submitBtn.innerText = "আপডেট করুন"; editIndexInput.value = index;
+            modalTitle.innerText = "শিক্ষার্থীর তথ্য পরিবর্তন"; submitBtn.innerText = "আপডেট করুন"; editIndexInput.value = index;
             document.getElementById('studentName').value = student.name;
             subjectKeys.forEach(key => {
                 const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);
