@@ -150,9 +150,10 @@
                             <th class="border border-gray-300 p-1 md:p-2 font-bold bg-gray-100 w-14">মোট</th>
                             <th class="border border-gray-300 p-1 md:p-2 bg-gray-100 w-14">গড়</th>
                             <th class="border border-gray-300 p-1 md:p-2 bg-gray-100 w-14">গ্রেড</th>
-                            <th class="border border-gray-300 p-1 md:p-2 bg-amber-50 text-amber-900 font-bold w-16">
+                            <th
+                                class="border border-gray-300 p-1 md:p-2 bg-amber-50 text-amber-900 font-bold w-16 hide-on-pdf">
                                 অবস্থান</th>
-                            <th class="border border-gray-300 p-1 md:p-2 hide-on-pdf w-24 bg-gray-100">অ্যাকশন</th>
+                            <th class="border border-gray-300 p-1 md:p-2 w-24 bg-gray-100 hide-on-pdf">অ্যাকশন</th>
                         </tr>
                     </thead>
                     <tbody id="resultTableBody" class="bg-white divide-y divide-gray-200"></tbody>
@@ -397,16 +398,21 @@
         function calculateGrade(student) {
             let hasFailMark = false;
             let totalActiveSubjectsWithMarks = 0;
+            const activeSubjects = getActiveSubjects();
+            let countActiveSubjects = 0;
 
             subjectKeys.forEach(key => {
                 if (student[key] !== "" && student[key] !== undefined) {
                     totalActiveSubjectsWithMarks++;
                     if (parseInt(student[key]) < 33) hasFailMark = true;
                 }
+                if (activeSubjects[key]) { countActiveSubjects++; }
             });
 
+            const absSubjects = countActiveSubjects - totalActiveSubjectsWithMarks;
+
             if (hasFailMark) return { letter: 'F', color: 'text-red-600 font-bold' };
-            if (totalActiveSubjectsWithMarks === 0) return { letter: '-', color: 'text-gray-500' };
+            if (absSubjects) return { letter: `abs(${absSubjects})`, color: 'text-red-600 font-bold italic' };
 
             const average = student.average;
             if (average >= 80) return { letter: 'A+', color: 'text-green-600 font-bold' };
@@ -463,7 +469,7 @@
 
             students.forEach((student, index) => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50 transition-colors";
+                tr.className = "hover:bg-gray-100 transition-colors";
                 let subjectTDs = '';
                 let totalMarks = 0;
                 let subjectsWithMarksCount = 0;
@@ -471,7 +477,7 @@
                 subjectKeys.forEach(key => {
                     if (activeSubjects[key]) {
                         if (student[key] === "" || student[key] === undefined) {
-                            subjectTDs += `<td class="border border-gray-300 p-1 text-black italic bg-gray-50">-</td>`;
+                            subjectTDs += `<td class="border border-gray-300 p-1 text-black italic bg-red-100">-</td>`;
                         } else {
                             subjectTDs += `<td class="border border-gray-300 p-1 text-black">${toBanglaNum(student[key])}</td>`;
                             totalMarks += parseInt(student[key]) || 0;
@@ -492,9 +498,8 @@
                     <td class="border border-gray-300 p-1 md:p-2 font-bold text-black bg-gray-50">${toBanglaNum(student.total)}</td>
                     <td class="border border-gray-300 p-1 md:p-2 text-black bg-gray-50">${toBanglaNum(student.average)}</td>
                     <td class="border border-gray-300 p-1 md:p-2 ${grade.color} bg-gray-50">${grade.letter}</td>
-                    <!-- নতুন অবস্থান ডাটা সেল -->
-                    <td class="border border-gray-300 p-1 md:p-2 font-bold bg-amber-50 text-amber-900">${toBanglaNum(currentRank)}</td>
-                    <td class="border border-gray-300 p-1 md:p-2 hide-on-pdf flex justify-center items-center gap-3">
+                    <td class="border border-gray-300 p-1 md:p-2 font-bold bg-amber-50 text-amber-900 hide-on-pdf">${toBanglaNum(currentRank)}</td>
+                    <td class="border border-gray-300 p-1 md:p-2 flex justify-center items-center gap-3 hide-on-pdf">
                         <button type="button" onclick="editStudent(${index})" class="text-blue-600 text-base cursor-pointer hover:scale-110 transition-transform" title="সম্পাদনা">✏️</button>
                         <button type="button" onclick="triggerDelete(${index})" class="text-red-500 text-base cursor-pointer hover:scale-110 transition-transform" title="মুছুন">❌</button>
                     </td>
